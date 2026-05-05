@@ -51,9 +51,10 @@ const COLS = 16;
 
 let score = 0;
 
+// 2 = uscita
 const maze = [
 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-[1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
+[1,0,0,0,1,0,0,0,0,0,1,0,0,0,2,1],
 [1,0,1,0,1,0,1,1,1,0,1,0,1,1,0,1],
 [1,0,1,0,0,0,1,0,1,0,0,0,0,1,0,1],
 [1,0,1,1,1,0,1,0,1,1,1,1,0,1,0,1],
@@ -78,7 +79,7 @@ canvas.addEventListener("click", (e)=>{
     const mx = Math.floor((e.clientX - rect.left)/TILE);
     const my = Math.floor((e.clientY - rect.top)/TILE);
 
-    if(maze[my][mx] === 0){
+    if(maze[my][mx] !== 1){
         player.x = mx;
         player.y = my;
         score++;
@@ -94,17 +95,24 @@ function moveMinotaur(){
     const dy = Math.sign(player.y - minotaur.y);
 
     if(Math.random() < 0.5){
-        if(maze[minotaur.y][minotaur.x + dx] === 0){
+        if(maze[minotaur.y][minotaur.x + dx] !== 1){
             minotaur.x += dx;
         }
     } else {
-        if(maze[minotaur.y + dy][minotaur.x] === 0){
+        if(maze[minotaur.y + dy][minotaur.x] !== 1){
             minotaur.y += dy;
         }
     }
 }
 
 function checkGame(){
+    // vittoria
+    if(maze[player.y][player.x] === 2){
+        alert("Sei fuggita dal labirinto...");
+        resetGame();
+    }
+
+    // sconfitta
     if(player.x === minotaur.x && player.y === minotaur.y){
         alert("Il Minotauro ti ha preso...");
         resetGame();
@@ -124,30 +132,34 @@ function draw(){
     for(let y=0;y<ROWS;y++){
         for(let x=0;x<COLS;x++){
             if(maze[y][x] === 1){
-                ctx.fillStyle = "#064d1a"; // foglie
+                ctx.fillStyle = "#064d1a";
                 ctx.fillRect(x*TILE,y*TILE,TILE,TILE);
 
-                // rose rosse pixel
                 if(Math.random() < 0.05){
                     ctx.fillStyle = "#a00";
                     ctx.fillRect(x*TILE+10,y*TILE+10,6,6);
                 }
-            } else {
+            } 
+            else if(maze[y][x] === 2){
+                ctx.fillStyle = "#0ff"; // uscita luminosa
+                ctx.fillRect(x*TILE,y*TILE,TILE,TILE);
+            }
+            else {
                 ctx.fillStyle = "#021";
                 ctx.fillRect(x*TILE,y*TILE,TILE,TILE);
             }
         }
     }
 
-    // player (bambino pixel)
+    // player
     ctx.fillStyle = "#222";
-    ctx.fillRect(player.x*TILE+10, player.y*TILE+6, 12, 12); // capelli
+    ctx.fillRect(player.x*TILE+10, player.y*TILE+6, 12, 12);
     ctx.fillStyle = "#bbb";
-    ctx.fillRect(player.x*TILE+12, player.y*TILE+10, 8, 8); // viso
+    ctx.fillRect(player.x*TILE+12, player.y*TILE+10, 8, 8);
     ctx.fillStyle = "#888";
-    ctx.fillRect(player.x*TILE+13, player.y*TILE+12, 2, 2); // occhi
+    ctx.fillRect(player.x*TILE+13, player.y*TILE+12, 2, 2);
 
-    // minotauro (macabro)
+    // minotauro
     ctx.fillStyle = "#400";
     ctx.fillRect(minotaur.x*TILE+6, minotaur.y*TILE+6, 20, 20);
     ctx.fillStyle = "#f00";
