@@ -1,156 +1,178 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classic Pong - Liceo Classico Edition</title>
-    <style>
-        /* CSS: Definiamo l'estetica retrò */
-        body {
-            margin: 0;
-            background-color: #222;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
-            font-family: 'Courier New', Courier, monospace;
-            overflow: hidden;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classic Pong - Fixed</title>
 
-        canvas {
-            border: 5px solid #fff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-            background-color: #000;
-        }
+<style>
+body {
+    margin: 0;
+    background-color: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+    font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
+}
 
-        .instructions {
-            position: absolute;
-            top: 10px;
-            text-align: center;
-            width: 100%;
-        }
-    </style>
+canvas {
+    border: 5px solid #fff;
+    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    background-color: #000;
+}
+
+.instructions {
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    text-align: center;
+}
+</style>
 </head>
+
 <body>
 
-    <div class="instructions"> Usa il <b>Mouse</b> o il <b>Touch</b> per muovere la racchetta</div>
-    <canvas id="pongCanvas"></canvas>
+<div class="instructions">Muovi il mouse per giocare</div>
+<canvas id="pongCanvas"></canvas>
 
-    <script>
-        // JS: Logica del gioco
-        const canvas = document.getElementById("pongCanvas");
-        const ctx = canvas.getContext("2d");
+<script>
+const canvas = document.getElementById("pongCanvas");
+const ctx = canvas.getContext("2d");
 
-        // Adattiamo il canvas allo schermo
-        canvas.width = 800;
-        canvas.height = 400;
+canvas.width = 800;
+canvas.height = 400;
 
-        // Variabili di gioco
-        const paddleWidth = 10, paddleHeight = 80;
-        let userY = (canvas.height - paddleHeight) / 2;
-        let aiY = (canvas.height - paddleHeight) / 2;
-        let ballX = canvas.width / 2, ballY = canvas.height / 2;
-        let ballSpeedX = 5, ballSpeedY = 5;
-        let userScore = 0, aiScore = 0;
+const paddleWidth = 10, paddleHeight = 80;
+const ballRadius = 10;
 
-        // Controllo della racchetta dell'utente
-        canvas.addEventListener("mousemove", (e) => {
-            let rect = canvas.getBoundingClientRect();
-            userY = e.clientY - rect.top - paddleHeight / 2;
-        });
+let userY = (canvas.height - paddleHeight) / 2;
+let aiY = (canvas.height - paddleHeight) / 2;
 
-        function drawRect(x, y, w, h, color) {
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y, w, h);
-        }
+let ballX = canvas.width / 2;
+let ballY = canvas.height / 2;
+let ballSpeedX = 5;
+let ballSpeedY = 3;
 
-        function drawCircle(x, y, r, color) {
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(x, y, r, 0, Math.PI * 2, false);
-            ctx.closePath();
-            ctx.fill();
-        }
+let userScore = 0;
+let aiScore = 0;
 
-        function drawText(text, x, y) {
-            ctx.fillStyle = "#FFF";
-            ctx.font = "45px Courier New";
-            ctx.fillText(text, x, y);
-        }
+// CONTROLLI
+canvas.addEventListener("mousemove", (e) => {
+    let rect = canvas.getBoundingClientRect();
+    userY = e.clientY - rect.top - paddleHeight / 2;
+});
 
-        function resetBall() {
-            ballX = canvas.width / 2;
-            ballY = canvas.height / 2;
-            ballSpeedX = -ballSpeedX;
-            ballSpeedY = 5;
-        }
+// DISEGNO
+function drawRect(x, y, w, h) {
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(x, y, w, h);
+}
 
-        function update() {
-            // Movimento palla
-            ballX += ballSpeedX;
-            ballY += ballSpeedY;
+function drawCircle(x, y, r) {
+    ctx.fillStyle = "#FFF";
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+}
 
-            // Intelligenza Artificiale (movimento fluido)
-            let aiTarget = ballY - (paddleHeight / 2);
-            aiY += (aiTarget - aiY) * 0.1;
+function drawText(text, x, y) {
+    ctx.font = "40px Courier New";
+    ctx.fillText(text, x, y);
+}
 
-            // Rimbalzo bordi sopra/sotto
-            if (ballY + 10 > canvas.height || ballY - 10 < 0) {
-                ballSpeedY = -ballSpeedY;
-            }
+// RESET PALLA
+function resetBall() {
+    ballX = canvas.width / 2;
+    ballY = canvas.height / 2;
 
-            // Controllo collisioni racchette
-            let player = (ballX < canvas.width / 2) ? { y: userY, x: 0 } : { y: aiY, x: canvas.width - paddleWidth };
+    ballSpeedX = -ballSpeedX;
+    ballSpeedY = (Math.random() * 4) - 2; // traiettoria variabile
+}
 
-            if (ballX > player.x && ballX < player.x + paddleWidth &&
-                ballY > player.y && ballY < player.y + paddleHeight) {
-                
-                // Calcolo dell'angolo di rimbalzo in base a dove colpisce la racchetta
-                let collidePoint = (ballY - (player.y + paddleHeight / 2)) / (paddleHeight / 2);
-                let angleRad = (Math.PI / 4) * collidePoint;
-                let direction = (ballX < canvas.width / 2) ? 1 : -1;
-                
-                ballSpeedX = direction * Math.ceil(Math.abs(ballSpeedX) * 1.05); // Accelera leggermente
-                ballSpeedY = 7 * Math.sin(angleRad);
-            }
+// COLLISIONE
+function collision(player) {
+    return (
+        ballX - ballRadius < player.x + paddleWidth &&
+        ballX + ballRadius > player.x &&
+        ballY + ballRadius > player.y &&
+        ballY - ballRadius < player.y + paddleHeight
+    );
+}
 
-            // Punteggio
-            if (ballX - 10 < 0) {
-                aiScore++;
-                resetBall();
-            } else if (ballX + 10 > canvas.width) {
-                userScore++;
-                resetBall();
-            }
-        }
+// UPDATE
+function update() {
+    ballX += ballSpeedX;
+    ballY += ballSpeedY;
 
-        function render() {
-            // Pulisci campo
-            drawRect(0, 0, canvas.width, canvas.height, "#000");
+    // AI fluida
+    let aiTarget = ballY - paddleHeight / 2;
+    aiY += (aiTarget - aiY) * 0.1;
 
-            // Disegna linea centrale
-            for (let i = 0; i < canvas.height; i += 40) {
-                drawRect(canvas.width / 2 - 1, i, 2, 20, "#FFF");
-            }
+    // rimbalzo sopra/sotto
+    if (ballY + ballRadius > canvas.height || ballY - ballRadius < 0) {
+        ballSpeedY = -ballSpeedY;
+    }
 
-            // Disegna punteggi
-            drawText(userScore, canvas.width / 4, canvas.height / 5);
-            drawText(aiScore, 3 * canvas.width / 4, canvas.height / 5);
+    let player = (ballX < canvas.width / 2)
+        ? { x: 0, y: userY }
+        : { x: canvas.width - paddleWidth, y: aiY };
 
-            // Disegna racchette e palla
-            drawRect(0, userY, paddleWidth, paddleHeight, "#FFF");
-            drawRect(canvas.width - paddleWidth, aiY, paddleWidth, paddleHeight, "#FFF");
-            drawCircle(ballX, ballY, 10, "#FFF");
-        }
+    if (collision(player)) {
+        let collidePoint = (ballY - (player.y + paddleHeight / 2)) / (paddleHeight / 2);
 
-        function game() {
-            update();
-            render();
-        }
+        // clamp
+        collidePoint = Math.max(-1, Math.min(1, collidePoint));
 
-        // Loop a 60 frame al secondo
-        setInterval(game, 1000 / 60);
-    </script>
+        let angle = collidePoint * (Math.PI / 4);
+        let direction = (ballX < canvas.width / 2) ? 1 : -1;
+
+        ballSpeedX = direction * (Math.abs(ballSpeedX) * 1.05);
+        ballSpeedY = 7 * Math.sin(angle);
+    }
+
+    // punteggio
+    if (ballX - ballRadius < 0) {
+        aiScore++;
+        resetBall();
+    } else if (ballX + ballRadius > canvas.width) {
+        userScore++;
+        resetBall();
+    }
+}
+
+// RENDER
+function render() {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // linea centrale
+    for (let i = 0; i < canvas.height; i += 30) {
+        drawRect(canvas.width / 2 - 1, i, 2, 15);
+    }
+
+    // punteggio
+    drawText(userScore, canvas.width / 4, 50);
+    drawText(aiScore, 3 * canvas.width / 4, 50);
+
+    // racchette
+    drawRect(0, userY, paddleWidth, paddleHeight);
+    drawRect(canvas.width - paddleWidth, aiY, paddleWidth, paddleHeight);
+
+    // palla
+    drawCircle(ballX, ballY, ballRadius);
+}
+
+// LOOP
+function game() {
+    update();
+    render();
+}
+
+setInterval(game, 1000 / 60);
+</script>
+
 </body>
 </html>
